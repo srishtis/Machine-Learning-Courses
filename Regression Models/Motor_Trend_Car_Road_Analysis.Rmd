@@ -1,0 +1,86 @@
+---
+title: "Motor Trend Car Road Analysis"
+author: "Srishti Saha"
+output:
+  pdf_document: default
+  html_notebook: default
+---
+\fontsize{8}{18}
+
+# __EXECUTIVE SUMMARY__
+You work for Motor Trend, a magazine about the automobile industry. Looking at a data set of a collection of cars, they are interested in exploring the relationship between a set of variables and miles per gallon (MPG) (outcome). They are particularly interested in the following two questions:
+“Is an automatic or manual transmission better for MPG”
+“Quantify the MPG difference between automatic and manual transmissions”
+
+# __SOLUTION__
+## Importing Dataset and EDA
+```{r, message=FALSE, warning=FALSE}
+#obtain the data
+library(datasets)
+data(mtcars)
+#correlation
+cor(mtcars$mpg,mtcars[,-1])
+# change data type of a few variables
+mtcars$am <- factor(mtcars$am,labels=c('Automatic','Manual'))
+```
+
+## 1. Is an automatic or manual transmission better for MPG?
+Null-hypothesis = there is no difference in MPG usage for different transmission method.
+Alternative hypothesis = there is difference in MPG usage for different transmission method.
+```{r, message=FALSE, warning=FALSE}
+# perform a simple t-test
+t.test(mtcars$mpg~mtcars$am)
+```
+Based on the results, p-value = 0.001374<0.05, reject the null hypothesis that there is no difference between MPG usage between the different transmission methods, and conclude, that automatic transmission cars have lower mpg compared with manual transmission cars, with assumption that all other conditions remain unchanged.
+
+Furthermore, checking mean of mpg in Automatic (at 17.1) and Manual (at 24.4), __conclusion is that the Manual transmission is better for MPG; keeping all other factors constant.__
+
+## 2. Quantify the MPG difference between automatic and manual transmissions
+The aim here is to quantify the MPG difference between transmission types, and find if there are other variables that account for the MPG differences.
+```{r, message=FALSE, warning=FALSE}
+# creating a step wise model
+stepmodel = step(lm(data = mtcars, mpg ~ .),trace=0,steps=10000)
+summary(stepmodel)
+```
+About 84% (by adjusted R-squared as that penalizes for too many variables and normalizes the variance) of the variance is explained by this model. Cylinders cyl6 and cyl8 both have a negative relation with mpg (-3.03 miles and -2.16 miles for cyl6 and cyl8 respectively). Similarly, horsepower (hp) sees a negative relation wrt mpg i.e. (-0.03miles), and weight (wt) shows -2.5miles (for every 1,000lb). 
+
+__However, amManual has a value of 1.80921 mpg , thus indicating the magnitude by which manual transmission is better than automatic transmission i.e 1.81mpg__
+
+### Improvement in model for Q2
+```{r, message=FALSE, warning=FALSE}
+# creating a step wise model
+model_imp <- lm(mpg~ factor(am):wt + factor(am):qsec,data=mtcars)
+summary(model_imp)
+```
+
+Observation 1:
+Observation is that this model has an adjusted R-squared of 87.9% ( or 89.5%)
+
+From the coeff values, we have the following conclusions:
+
+Observation 2:
+As the weight increased by 1000 lbs, the mpg decreased by -3.176 for automatic transmission, and -6.09 for manual transmission.
+Conclusion: with increasing car weight we should choose manual transmission cars
+
+Observation 3:
+when the acceleration speed dropped, and 1/4 mile time increased (by 1 sec), the mpg factor increased by 0.834 miles for automatic transmission cars, and 1.446 miles for manual transmission cars
+Conclusion: With lower acceleration speed, but same weight, manual transmission cars are better for mpg
+
+#__APPENDIX__
+```{r, message=FALSE, warning=FALSE}
+#checking correlation of all variables
+pairs(mpg ~ ., data = mtcars, main="Plot 1 - Relationships between all the variables")
+```
+
+```{r, message=FALSE, warning=FALSE}
+#Checking the boxplots for mpg by transmission type
+
+boxplot(mpg ~ am, data = mtcars, xlab = "Transmission", ylab = "Miles per gallon", main="Plot 2- Miles per gallon by Transmission Type")
+```
+
+```{r, message=FALSE, warning=FALSE}
+#plotting the model results
+plot(stepmodel)
+```
+
+
